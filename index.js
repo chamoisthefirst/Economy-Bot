@@ -120,7 +120,7 @@ const times = [300000,300000,86400000,604800000]
 
       if(command === "join"){
         if(storage[`${author}`] && storage[`${author}`] != "deleted"){
-            message.reply("You already have an account!")
+            message.channel.send("You already have an account")
             return;
         }
 
@@ -131,17 +131,17 @@ const times = [300000,300000,86400000,604800000]
             "cooldowns":[0,0,0,0]
         }
         save()
-        message.reply("You have succesfully made a bank account, here's **$500** for you")
+        message.channel.send("You have succesfully made a bank account, here's **$500** for you")
       }
 
       //BALANCE COMMAND
 
       if(command === "bal"){
         if(!storage[`${author}`]){
-            message.reply(`You're not in my database, type ${prefix}join to create an account.`)
+            message.channel.send(`You're not in my database, type ${prefix}join to create an account.`)
             return;
         }else if(storage[`${author}`] === "deleted"){
-            return message.reply(`Your account was deleted, type ${prefix}join to join again`)
+            return message.channel.send(`Your account was deleted, type ${prefix}join to join again`)
         }
         const EMBED = new EmbedBuilder()
         .setColor("Green")
@@ -154,10 +154,10 @@ const times = [300000,300000,86400000,604800000]
 
       if(command === "work"){
         if(!storage[`${author}`]){
-            message.reply(`You're not in my database, type ${prefix}join to create an account.`)
+            message.channel.send(`You're not in my database, type ${prefix}join to create an account.`)
             return;
         }else if(storage[`${author}`] === "deleted"){
-            return message.reply(`Your account was deleted, type ${prefix}join to join again`)
+            return message.channel.send(`Your account was deleted, type ${prefix}join to join again`)
         }
         let a = 0;
         if(storage[`${author}`].cooldowns[a] >= Date.now()){
@@ -182,10 +182,10 @@ const times = [300000,300000,86400000,604800000]
 
       if(command === "beg"){
         if(!storage[`${author}`]){
-            message.reply(`You're not in my database, type ${prefix}join to create an account.`)
+            message.channel.send(`You're not in my database, type ${prefix}join to create an account.`)
             return;
         }else if(storage[`${author}`] === "deleted"){
-            return message.reply(`Your account was deleted, type ${prefix}join to join again`)
+            return message.channel.send(`Your account was deleted, type ${prefix}join to join again`)
         }
         let a = 1;
         if(storage[`${author}`].cooldowns[a] >= Date.now()){
@@ -210,10 +210,10 @@ const times = [300000,300000,86400000,604800000]
 
       if(command === "daily"){
         if(!storage[`${author}`]){
-            message.reply(`You're not in my database, type ${prefix}join to create an account.`)
+            message.channel.send(`You're not in my database, type ${prefix}join to create an account.`)
             return;
         }else if(storage[`${author}`] === "deleted"){
-            return message.reply(`Your account was deleted, type ${prefix}join to join again`)
+            return message.channel.send(`Your account was deleted, type ${prefix}join to join again`)
         }
         let a = 2;
         if(storage[`${author}`].cooldowns[a] >= Date.now()){
@@ -242,10 +242,10 @@ const times = [300000,300000,86400000,604800000]
 
       if(command === "weekly"){
         if(!storage[`${author}`]){
-            message.reply(`You're not in my database, type ${prefix}join to create an account.`)
+            message.channel.send(`You're not in my database, type ${prefix}join to create an account.`)
             return;
         }else if(storage[`${author}`] === "deleted"){
-            return message.reply(`Your account was deleted, type ${prefix}join to join again`)
+            return message.channel.send(`Your account was deleted, type ${prefix}join to join again`)
         }
         let a = 3;
         if(storage[`${author}`].cooldowns[a] >= Date.now()){
@@ -274,13 +274,13 @@ const times = [300000,300000,86400000,604800000]
 
       if(command === "delacc"){
         if(!storage[`${author}`]){
-            message.reply(`You're already not in my databas.`)
+            message.rechannel.sendply(`You're already not in my databas.`)
             return;
         }else if(storage[`${author}`] === "deleted"){
-            return message.reply(`Your account was already deleted`)
+            return message.channel.send(`Your account was already deleted`)
         }
         if(!hmm){
-            message.reply(`Are you sure you want to delete your account?\nIf so type ${prefix}delacc again.`)
+            message.channel.send(`Are you sure you want to delete your account?\nIf so type ${prefix}delacc again.`)
             hmm = true;
         }else{
             storage[`${author}`]="deleted"
@@ -305,10 +305,10 @@ const times = [300000,300000,86400000,604800000]
 
       /*if(command === "shop"){
         if(!storage[`${author}`]){
-            message.reply(`You're not in my database, type ${prefix}join to create an account.`)
+            message.channel.send(`You're not in my database, type ${prefix}join to create an account.`)
             return;
         }else if(storage[`${author}`] === "deleted"){
-            return message.reply(`Your account was deleted, type ${prefix}join to join again`)
+            return message.channel.send(`Your account was deleted, type ${prefix}join to join again`)
         }
 
       }*/
