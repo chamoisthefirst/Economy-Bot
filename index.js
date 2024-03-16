@@ -1,5 +1,3 @@
-
-    
 const { Client, 
     GatewayIntentBits,
     EmbedBuilder,
