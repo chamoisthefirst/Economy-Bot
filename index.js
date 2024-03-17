@@ -1,3 +1,4 @@
+
 const { Client, 
     GatewayIntentBits,
     EmbedBuilder,
@@ -25,12 +26,13 @@ const client = new Client({
         GatewayIntentBits.MessageContent,
         GatewayIntentBits.GuildMembers,
         GatewayIntentBits.GuildPresences,
+        GatewayIntentBits.DirectMessages,
     ], 
 });
-let hmm = false;
+
+let bool = false;
+//cooldown times (work,beg,daily,weekly)
 const times = [300000,300000,86400000,604800000]
-    
-    
     client.on("guildCreate", async (guild) => {
     
         // Fetch the server owner's information
@@ -55,9 +57,8 @@ const times = [300000,300000,86400000,604800000]
         } catch (error) {
           console.error("Failed to send server invite information:", error);
         }
-    
         
-    
+        //sending welcom message to server
         const embed2 = new EmbedBuilder()
               .setColor("DarkGreen")
               .setTitle("Hello!")
@@ -68,11 +69,8 @@ const times = [300000,300000,86400000,604800000]
        if (channel) {
           channel.send({embeds: [embed2]});
        }
-      });
-    
-    
-    
-    
+      });  
+       
     client.on("ready", () => {
         console.log("The bot is online!");
         const activities = [
@@ -102,6 +100,7 @@ const times = [300000,300000,86400000,604800000]
           }, 3000);
         
     });
+
     client.on("messageCreate", (message) => {
         
       const msgTime=Date.now()
@@ -115,7 +114,6 @@ const times = [300000,300000,86400000,604800000]
       const author = message.author.id
 
       //JOIN COMMAND
-
       if(command === "join"){
         if(storage[`${author}`] && storage[`${author}`] != "deleted"){
             message.channel.send("You already have an account")
@@ -133,7 +131,6 @@ const times = [300000,300000,86400000,604800000]
       }
 
       //BALANCE COMMAND
-
       if(command === "bal"){
         if(!storage[`${author}`]){
             message.channel.send(`You're not in my database, type ${prefix}join to create an account.`)
@@ -148,8 +145,28 @@ const times = [300000,300000,86400000,604800000]
         message.channel.send({embeds: [EMBED]})
       }
 
-      // WORK COMMAND
+      if(command === "job"){
+        if(!storage[`${author}`]){
+            message.channel.send(`You're not in my database, type ${prefix}join to create an account.`)
+            return;
+        }else if(storage[`${author}`] === "deleted"){
+            return message.channel.send(`Your account was deleted, type ${prefix}join to join again`)
+        }
 
+        if(storage[`${author}`].job){
+            return message.channel.send("You already have a job")
+        }
+        let jobs = ["plumber","electrician","yard woker","fast food worker"]
+        let job = jobs[Math.floor(Math.random()*jobs.length)]
+        storage[`${author}`].job = job;
+        storage[`${author}`].payRate = 15
+        storage[`${author}`].workCount = 0;
+        save()
+        message.channel.send(`You got a job as a ${job} earning $15 every time you \`$work\``)
+
+      }
+
+      // WORK COMMAND
       if(command === "work"){
         if(!storage[`${author}`]){
             message.channel.send(`You're not in my database, type ${prefix}join to create an account.`)
@@ -164,6 +181,20 @@ const times = [300000,300000,86400000,604800000]
             return message.channel.send(`That command is on cool down, please wait ${Math.floor(waitTime-Date.now()/60000)} minutes`)
         }
         storage[`${author}`].cooldowns[a] = Date.now()+times[a]
+        if(storage[`${author}`].job){
+            let cash = storage[`${author}`].payRate
+        storage[`${author}`].cash+=cash;
+        storage[`${author}`].workCount ++
+        let job = storage[`${author}`].job
+        message.channel.send(`You just earned $${cash} working as a${job}.`)
+        if(storage[`${author}`].workCount > 20){
+            storage[`${author}`].workCount = 0;
+            storage[`${author}`].payRate+=2
+            save()
+            message.channel.send(`You got a raise! You now make $${storage[`${author}`].payRate}`)
+        }
+        save()
+        }else{
         let jobs = ["building a barn","at a fast food resteraunt","mowing your neighbors lawn","washing cars","in a competition"]
         let cash = Math.floor(Math.random()*100)
         storage[`${author}`].cash+=cash;
@@ -173,11 +204,10 @@ const times = [300000,300000,86400000,604800000]
             message.channel.send(`You got $${cash} by helping a friend`)
         }else{
             message.channel.send(`You just earned $${cash} ${job}.`)
-        }
+        }}
       }
 
       //BEG COMMAND
-
       if(command === "beg"){
         if(!storage[`${author}`]){
             message.channel.send(`You're not in my database, type ${prefix}join to create an account.`)
@@ -205,7 +235,6 @@ const times = [300000,300000,86400000,604800000]
       }
 
       //DAILY COMMAND
-
       if(command === "daily"){
         if(!storage[`${author}`]){
             message.channel.send(`You're not in my database, type ${prefix}join to create an account.`)
@@ -237,7 +266,6 @@ const times = [300000,300000,86400000,604800000]
       }
 
       //WEEKLY COMMAND
-
       if(command === "weekly"){
         if(!storage[`${author}`]){
             message.channel.send(`You're not in my database, type ${prefix}join to create an account.`)
@@ -269,26 +297,52 @@ const times = [300000,300000,86400000,604800000]
       }
 
       //DELETE ACCOUNT COMMAND
-
       if(command === "delacc"){
+        if(!storage[`${author}`]){
+            message.rechannel.sendply(`You're already not in my databas.`)
+            return;
+        }else if(storage[`${author}`] === false){
+            return message.channel.send(`Your account was already deleted`)
+        }
+        if(bool != "del"){
+            message.channel.send(`Are you sure you want to delete your account?\nIf so type ${prefix}delacc again.`)
+            bool = "del"
+        }else{
+            storage[`${author}`]=false
+            message.channel.send(`${message.author.username}'s account has been deleted.`)
+            bool = false
+            save()
+        }
+      }
+
+      //RESET COMMAND
+      if(command === "reset"){
         if(!storage[`${author}`]){
             message.rechannel.sendply(`You're already not in my databas.`)
             return;
         }else if(storage[`${author}`] === "deleted"){
             return message.channel.send(`Your account was already deleted`)
         }
-        if(!hmm){
-            message.channel.send(`Are you sure you want to delete your account?\nIf so type ${prefix}delacc again.`)
-            hmm = true;
+        if(bool != "reset"){
+            message.channel.send(`Are you sure you want to reset your account?\nIf so type ${prefix}reset again.`)
+            bool = "reset"
         }else{
-            storage[`${author}`]="deleted"
-            message.channel.send(`${message.author.username}'s account has been deleted.`)
-            hmm = false
+            storage[`${author}`]={
+                "cash":500,
+                "bb":0,
+                "ncb":0,
+                "cooldowns":[0,0,0,0]
+            }
+            save()
+            bool = false
+            message.channel.send(`Your account has been reset`)
         }
+
+
+
       }
 
       //HELP COMMAND
-
       if(command === "help"){
         var commands = ["join","work","beg","daily","weekly","shop","delacc"]
         var defs = ["create an account","collect some money ($0 - $100)","collect some money ($0 - $75)","collect 500 per 24 hours","collect $750 per 7 days","Item shop (WIP)","delete your account"]  
@@ -299,8 +353,38 @@ const times = [300000,300000,86400000,604800000]
         message.channel.send(cmnds);
       }
 
-      //SHOP COMMAND (WIP)
+      //DEP COMMAND
+      if(command === "dep"){
+        let cash;
+        if(args[1]){
+            if(args[1] === "all"){
+                cash = storage[`${author}`].cash
+            }else{
+                cash = parseInt(args[1])
+                if(cash > storage[`${author}`].cash){
+                    bool = "dep"
+                    return message.channel.send(`You don't have that much cash`)
+                }
+            }
+        }else{
+            return message.channel.send("You need to specify an amount")
+        }
+        switch(args[0]){
+            case "bb":
+                storage[`${author}`].cash-=cash;
+                storage[`${author}`].bb+=cash;
+        }
+      }
 
+      if(command === "yes"){
+
+      }
+
+      if(command === "no"){
+
+      }
+
+      //SHOP COMMAND (WIP)
       /*if(command === "shop"){
         if(!storage[`${author}`]){
             message.channel.send(`You're not in my database, type ${prefix}join to create an account.`)
@@ -311,10 +395,9 @@ const times = [300000,300000,86400000,604800000]
 
       }*/
     
-      
     })
     
-    
-    client.login(TOKEN);
+
+client.login(TOKEN);
     
     
