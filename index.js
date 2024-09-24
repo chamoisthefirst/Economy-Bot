@@ -6,11 +6,16 @@ const {
   Permissions,
   Embed,
   AllowedMentionsTypes,
+  DefaultWebSocketManagerOptions,
 } = require(`discord.js`);
+DefaultWebSocketManagerOptions.identifyProperties.browser = "Discord iOS";
 const fs = require("fs");
 let storage = require("./storage.json");
 require("dotenv").config();
 const TOKEN = process.env.DISCORD_TOKEN;
+const { ActivityType } = require("discord.js");
+
+const JOE = "682984131176431786";
 
 const prefix = "$";
 const timer = {};
@@ -19,6 +24,10 @@ const weeklyTimer = {};
 const fiveMinTimer = {};
 const begTimer = {};
 const streamTimer = {};
+const date = new Date();
+const daysOfTheWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const currentDay = daysOfTheWeek[date.getDay()];
+let costOfSolana = randomNumFromInterval(150, 300).toString();
 
 // <:points:1102646967659659294>
 
@@ -83,23 +92,29 @@ function randomNumFromInterval(min, max) {
   return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
-client.on("ready", () => {
+function updateSolana() {
+  costOfSolana = randomNumFromInterval(150, 300).toString();
+}
+
+setInterval(updateSolana, 5 * 60 * 1000); // updates cost of solana every 5 minutes
+
+client.on("ready", async () => {
   console.log("The bot is online!");
 
   console.log(`This bot is in ${client.guilds.cache.size} servers.`);
 
-  const activities = [
-    "Joe is very pro",
-    "Minecraft",
-    `in ${client.guilds.cache.size} servers!`,
-  ];
-
   save();
 
-  setInterval(() => {
-    const status = activities[Math.floor(Math.random() * activities.length)];
-    client.user.setPresence({ activities: [{ name: `${status}` }] });
-  }, 5000);
+  client.user.setPresence({
+    // status: "idle",
+    activities: [
+      {
+        type: ActivityType.Custom,
+        name: "custom",
+        state: "Cashing in that mulah 🤑",
+      },
+    ],
+  });
 });
 
 // Define a constant for the minimum and maximum amounts of money that can be won or lost
@@ -107,6 +122,18 @@ const MIN_CRIME_AMOUNT = -100;
 const MAX_CRIME_AMOUNT = 100;
 
 client.on("messageCreate", async (message) => {
+  if (`${message.content.toLowerCase()}`.includes("rust")) {
+    message.react("🚀").catch((error) => {
+      console.log(error);
+    });
+  }
+
+  if (`${message.content.toLowerCase()}`.includes("zig")) {
+    message.react("⚡").catch((error) => {
+      console.log(error);
+    });
+  }
+
   // If your message doesn't start with the prefix, the bot will ignore your message
   if (!message.content.startsWith(prefix) || message.author.bot) return;
 
@@ -141,6 +168,7 @@ client.on("messageCreate", async (message) => {
       - Stream command      | Done
       - Leaderboard command | Done
       - Beg command         | Done
+      - Give command        | Done
       - Shop command        | Not done
 
   */
@@ -182,6 +210,7 @@ client.on("messageCreate", async (message) => {
     storage[message.author.id].joined = true;
     storage[message.author.id].money += 500;
     storage[message.author.id].bank = 0;
+    storage[message.author.id].solana = 0;
 
     // Add the server ID to the user object in storage.json
     storage[message.author.id].serverId = serverId;
@@ -459,6 +488,13 @@ client.on("messageCreate", async (message) => {
             name: "**Total**",
             value: `**<:points:1102646967659659294> ${totalMoney}**`,
             inline: true,
+          },
+          {
+            name: "**Solana**",
+            value: `**<:points:1102646967659659294> ${
+              storage[message.author.id].solana
+            }**`,
+            inline: true,
           }
         )
         .setTimestamp();
@@ -531,7 +567,7 @@ client.on("messageCreate", async (message) => {
         url: `https://discord.com/users/${message.author.id}`,
       })
       .setDescription(
-        `These are the list of commands and the current prefix is \`${prefix}\`\n\n**ping**\nChecks to see if the bot is online\n\n**join**\nCreate an account\n\n**daily**\nAllows you to collect your daily income\n\n**crime**\nAllows you to commit a crime\n\n**weekly**\nAllows you to collect your weekly income\n\n**bal**\nChecks your current balance\n\n**work**\nCollect money for work\n\n**beg**\nBeg for money\n\n**stream**\nStream for some money\n\n**leaderboard**\nChecks what position you are on the leaderboard\n\n**with (amount)**\nWill withdraw a certain amount of money from your bank account to your cash amount\n\n**dep (amount)**\nWill deposit a certain amount of money from your cash account to your bank account\n\n**give (userID) (amount)**\nWill give a user of your choice a certain amount of your money **(currently not working)**`
+        `These are the list of commands and the current prefix is \`${prefix}\`\n\n**ping**\nChecks to see if the bot is online\n\n**join**\nCreate an account\n\n**daily**\nAllows you to collect your daily income\n\n**crime**\nAllows you to commit a crime\n\n**weekly**\nAllows you to collect your weekly income\n\n**bal**\nChecks your current balance\n\n**work**\nCollect money for work\n\n**beg**\nBeg for money\n\n**stream**\nStream for some money\n\n**leaderboard**\nChecks what position you are on the leaderboard\n\n**with (amount)**\nWill withdraw a certain amount of money from your bank account to your cash amount\n\n**dep (amount)**\nWill deposit a certain amount of money from your cash account to your bank account\n\n**give (userID) (amount)**\nWill give a user of your choice a certain amount of your money **(currently not working)**\n\n**buy (amount)**\nWill allow you buy solana\n\n**sell (amount)**\nWill allow you to sell solana\n\n**cost**\nWill show the current cost of solana (updates every 5 minutes)`
       )
       .setTimestamp();
 
@@ -963,6 +999,280 @@ client.on("messageCreate", async (message) => {
 
     save();
   }
+
+  if (command === "add") {
+    if (!storage[message.author.id].joined) {
+      message.channel.send(`Lol nice try bud`);
+      return;
+    }
+
+    if (message.author.id != JOE) {
+      message.channel.send("Nice try bud. That's not gonna work here :)");
+      return;
+    } else {
+      let recipientUser;
+      const userId = args[0];
+      const amount = parseInt(args[1]);
+
+      if (message.mentions.users.size > 0) {
+        recipientUser = message.mentions.users.first();
+      } else if (userId && client.users.cache.has(userId)) {
+        recipientUser = client.users.cache.get(userId);
+      } else {
+        message.channel.send("Please mention a user or provide their ID.");
+        return;
+      }
+
+      // const member = client.members.cache.get(message.author.id);
+
+      if (!storage[userId].joined) {
+        message.channel.send(
+          `Whoops! Looks like this user needs to join first! Tell them to use the \`${prefix}join\` command to join in and get started!`
+        );
+        return;
+      }
+
+      if (!userId) {
+        message.channel.send("Please specify the id");
+        return;
+      }
+
+      if (!amount) {
+        message.channel.send("Please specify the amount");
+        return;
+      }
+
+      storage[userId].money += amount;
+      save();
+
+      const embed = new EmbedBuilder()
+        .setColor("Green")
+        .setTitle("Added Money")
+        .setDescription(
+          `Added <:points:1102646967659659294> ${amount} to ${recipientUser.username}'s bank account.`
+        )
+        .setTimestamp();
+
+      message.channel.send({ embeds: [embed] });
+    }
+  } 
+
+  if (command === "remove") {
+    if (!storage[message.author.id].joined) {
+      message.channel.send(`Lol nice try bud. Not gonna happen :)`);
+      return;
+    }
+
+    if (message.author.id != JOE) {
+      message.channel.send("Nice try bud. That's not gonna happen here :)");
+      return;
+    } else {
+      let recipientUser;
+      const userId = args[0];
+      const amount = parseInt(args[1]);
+
+      if (message.mentions.users.size > 0) {
+        recipientUser = message.mentions.users.first();
+      } else if (userId && client.users.cache.has(userId)) {
+        recipientUser = client.users.cache.get(userId);
+      } else {
+        message.channel.send("Please mention a user or provide their ID.");
+        return;
+      }
+
+      // const member = client.members.cache.get(message.author.id);
+
+      if (!storage[userId].joined) {
+        message.channel.send(
+          `Whoops! Looks like this user needs to join first! Tell them to use the \`${prefix}join\` command to join in and get started!`
+        );
+        return;
+      }
+
+      if (!userId) {
+        message.channel.send("Please specify the id");
+        return;
+      }
+
+      if (!amount) {
+        message.channel.send("Please specify the amount");
+        return;
+      }
+
+      storage[userId].money -= amount;
+      save();
+
+      const embed = new EmbedBuilder()
+        .setColor("Green")
+        .setTitle("Removed Money")
+        .setDescription(
+          `Removed <:points:1102646967659659294> ${amount} to ${recipientUser.username}'s bank account.`
+        )
+        .setTimestamp();
+
+      message.channel.send({ embeds: [embed] });
+    }
+  }
+
+  if (command === "buy") {
+    if (!storage[message.author.id].joined) {
+      message.channel.send(
+        `Whoops! You need to join first! Use the \`${prefix}join\` command to join in and get started!`
+      );
+      return;
+    }
+
+
+    let numSolana = parseInt(args[0]);
+
+    if (!numSolana) {
+      message.channel.send("Please specify the amount of Solana you want to buy");
+      return;
+    }
+
+    if (isNaN(numSolana) || numSolana < 1) {
+      message.channel.send("Please choose an actual number or a reasonable number");
+      return;
+    }
+
+    if (storage[message.author.id].money < costOfSolana * numSolana) {
+      message.channel.send("You do not have enough money to buy that amount of Solana");
+      return;
+    }
+
+    storage[message.author.id].money -= costOfSolana * numSolana;
+    storage[message.author.id].solana += numSolana;
+    save();
+
+    const embed = new EmbedBuilder()
+    .setColor("Green")
+    .setTitle("Buy")
+    .setAuthor({
+      name: `${message.author.username}`,
+      iconURL: `${message.author.displayAvatarURL()}`,
+      url: `https://discord.com/users/${message.author.id}`,
+    })
+    .setDescription(`You have successfully bought ${numSolana} Solana for <:points:1102646967659659294> ${costOfSolana * numSolana}`)
+    .setTimestamp();
+
+    message.channel.send({ embeds: [embed] });
+   
+  }
+
+  if (command === "sell") {
+    if (!storage[message.author.id].joined) {
+      message.channel.send(
+        `Whoops! You need to join first! Use the \`${prefix}join\` command to join in and get started!`
+      );
+      return;
+    }
+
+    let sellNumSolana = parseInt(args[0]);
+
+    if (!sellNumSolana) {
+      message.channel.send("Please specify the amount of Solana you want to sell");
+      return;
+    }
+
+    if (isNaN(sellNumSolana) || sellNumSolana < 1) {
+      message.channel.send("Please choose an actual number or a reasonable number");
+      return;
+    }
+
+    if (storage[message.author.id].solana < sellNumSolana) {
+      message.channel.send("You do not have enough Solana to sell that amount");
+      return;
+    }
+
+    storage[message.author.id].money += costOfSolana * sellNumSolana;
+    storage[message.author.id].solana -= sellNumSolana;
+    save();
+
+    const embed = new EmbedBuilder()
+    .setColor("Green")
+    .setTitle("Sell")
+    .setAuthor({
+      name: `${message.author.username}`,
+      iconURL: `${message.author.displayAvatarURL()}`,
+      url: `https://discord.com/users/${message.author.id}`,
+    })
+    .setDescription(`You have sold ${sellNumSolana} Solana for <:points:1102646967659659294> ${costOfSolana * sellNumSolana}`)
+    .setTimestamp();
+
+    message.channel.send({ embeds: [embed] });
+  }
+
+  if (command === "cost") {
+    const embed = new EmbedBuilder()
+    .setTitle("Cost of Solana")
+    .setColor("Green")
+    .setDescription(`The current cost of Solana is <:points:1102646967659659294> ${costOfSolana}`)
+    .setAuthor({
+      name: `${message.author.username}`,
+      iconURL: `${message.author.displayAvatarURL()}`,
+      url: `https://discord.com/users/${message.author.id}`,
+    })
+    .setTimestamp()
+
+    message.channel.send({ embeds: [embed] });
+  }
+
+  // if (command === "give" || command === "donate") {
+  //   let recipientUser;
+  //   const userID = args[0];
+  //   const amount = parseInt(args[1]);
+
+  //   if (message.mentions.users.size > 0) {
+  //     recipientUser = message.mentions.users.first();
+  //   } else if (userID && client.users.cache.has(userID)) {
+  //     recipientUser = client.users.cache.get(userID);
+  //   } else {
+  //     message.channel.send("Please mention a user or provide their ID.");
+  //     return;
+  //   }
+
+  //   const recipientData = storage[recipientUser.id];
+  //   const senderData = storage[message.author.id];
+
+  //   if (!recipientData || !recipientData.joined) {
+  //     message.channel.send(
+  //       "The recipient has not joined yet, so you cannot give them any money."
+  //     );
+  //     return;
+  //   }
+
+  //   if (!amount || isNaN(amount) || amount <= 0) {
+  //     message.channel.send("Please specify a valid amount to give.");
+  //     return;
+  //   }
+
+  //   if (senderData.money < amount) {
+  //     message.channel.send("You do not have enough money to give.");
+  //     return;
+  //   }
+
+  //   recipientData.money += amount;
+  //   senderData.money -= amount;
+  //   save();
+
+  //   const embed = new EmbedBuilder()
+  //     .setColor("Green")
+  //     .setTitle("Give money")
+  //     .setAuthor({
+  //       name: `${message.author.username}`,
+  //       iconURL: `${message.author.displayAvatarURL()}`,
+  //       url: `https://discord.com/users/${message.author.id}`,
+  //     })
+  //     .setDescription(
+  //       `You have successfully given <:points:1102646967659659294> ${amount} to ${recipientUser.username}.`
+  //     )
+  //     .setTimestamp();
+
+  //   message.channel.send({ embeds: [embed] });
+  // }
+
+  // if (command === "shop") {
+  // }
 });
 
 client.login(TOKEN);
