@@ -1,403 +1,1345 @@
-
-const { Client, 
+const {
+    Client,
     GatewayIntentBits,
     EmbedBuilder,
     PermissionsBitField,
     Permissions,
     Embed,
-} = require(`discord.js`);
-    
-const fs = require("fs");
-let storage = require("./storage.json");
-    
-function save() {
-    fs.writeFileSync("./storage.json", JSON.stringify(storage));
-}
-    
-require("dotenv").config();
-const TOKEN = process.env.DISCORD_TOKEN;
-    
-const prefix = "$";
-      
-const client = new Client({
-    intents: [
-        GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.MessageContent,
-        GatewayIntentBits.GuildMembers,
-        GatewayIntentBits.GuildPresences,
-        GatewayIntentBits.DirectMessages,
-    ], 
-});
+    AllowedMentionsTypes,
+    DefaultWebSocketManagerOptions,
+  } = require(`discord.js`);
+  DefaultWebSocketManagerOptions.identifyProperties.browser = "Discord iOS";
+  const fs = require("fs");
+  let storage = require("./storage.json");
+  require("dotenv").config();
+  const TOKEN = process.env.DISCORD_TOKEN;
+  const { ActivityType } = require("discord.js");
 
-let bool = false;
-//cooldown times (work,beg,daily,weekly)
-const times = [300000,300000,86400000,604800000]
-    client.on("guildCreate", async (guild) => {
-    
-        // Fetch the server owner's information
-        const serverOwner = await guild.fetchOwner();
-      
-        // Sending the invite information to the bot owner
-        try {
-          const botOwner = await client.users.fetch("1089987702516088853");
+  const prefix = "$";
+  const timer = {};
+  const crimeTimer = {};
+  const weeklyTimer = {};
+  const fiveMinTimer = {};
+  const begTimer = {};
+  const streamTimer = {};
+  const date = new Date();
+  const daysOfTheWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const currentDay = daysOfTheWeek[date.getDay()];
+  let costOfSolana = randomNumFromInterval(150, 300).toString();
+  
+  // <:points:1290881924092657725>
+  
+  // <:check:1088834644381794365>
+  
+  /*
+  .setAuthor({
+    name: `${message.author.username}`,
+    iconURL: `${message.author.displayAvatarURL()}`,
+    url: `https://discord.com/users/${message.author.id}`,
+  })
+  */
+  
+  const cooldownTimes = {
+    command1: 86400000,
+    command2: 600000,
+    command3: 604800000,
+    command4: 300000,
+  };
+  
+  const client = new Client({
+    intents: [
+      GatewayIntentBits.Guilds,
+      GatewayIntentBits.GuildMessages,
+      GatewayIntentBits.MessageContent,
+      GatewayIntentBits.GuildMembers,
+      GatewayIntentBits.GuildPresences,
+    ],
+  });
+  
+  client.on("guildCreate", async (guild) => {
+    // Fetch the server owner's information
+    const serverOwner = await guild.fetchOwner();
+  
+    // Sending the invite information to the bot owner
+    try {
+      const botOwner = await client.users.fetch("592825756095348748");
+      const embed = new EmbedBuilder()
+        .setColor("Green")
+        .setTitle("New Server Invite")
+        .addFields(
+          { name: `Server name`, value: `${guild.name}` },
+          {
+            name: `Server Owner`,
+            value: `${serverOwner.user.tag} (${serverOwner.user.id})`,
+          }
+        )
+        .setTimestamp();
+      await botOwner.send({ embeds: [embed] });
+      console.log("Sent server invite information to bot owner.");
+    } catch (error) {
+      console.error("Failed to send server invite information:", error);
+    }
+  });
+  
+  function save() {
+    fs.writeFileSync("./storage.json", JSON.stringify(storage));
+  }
+  
+  function randomNumFromInterval(min, max) {
+    // min and max included
+    return Math.floor(Math.random() * (max - min + 1) + min);
+  }
+  
+  function updateSolana() {
+    costOfSolana = randomNumFromInterval(150, 300).toString();
+  }
+  
+  setInterval(updateSolana, 5 * 60 * 1000); // updates cost of solana every 5 minutes
+  
+  client.on("ready", async () => {
+    console.log("The bot is online!");
+  
+    console.log(`This bot is in ${client.guilds.cache.size} servers.`);
+  
+    save();
+  
+    client.user.setPresence({
+      // status: "idle",
+      activities: [
+        {
+          type: ActivityType.Custom,
+          name: "custom",
+          state: "Cashing in that mulah 🤑",
+        },
+      ],
+    });
+  });
+  
+  // Define a constant for the minimum and maximum amounts of money that can be won or lost
+  const MIN_CRIME_AMOUNT = -100;
+  const MAX_CRIME_AMOUNT = 100;
+  
+  client.on("messageCreate", async (message) => {
+    if (`${message.content.toLowerCase()}`.includes("rust")) {
+      message.react("🚀").catch((error) => {
+        console.log(error);
+      });
+    }
+  
+    if (`${message.content.toLowerCase()}`.includes("zig")) {
+      message.react("⚡").catch((error) => {
+        console.log(error);
+      });
+    }
+  
+    // If your message doesn't start with the prefix, the bot will ignore your message
+    if (!message.content.startsWith(prefix) || message.author.bot) return;
+  
+    const args = message.content.slice(prefix.length).split(/ +/);
+    const command = args.shift().toLowerCase();
+  
+    const messageArray = message.content.split(" ");
+    const argument = messageArray.slice(1);
+    const cmd = messageArray[0];
+  
+    if (!storage[message.author.id]) {
+      storage[message.author.id] = {
+        joined: false,
+      };
+    }
+  
+    // COMMANDDS
+  
+    /*
+        TO DO:
+  
+        - Ping command        | Done
+        - Join command        | Done
+        - Collect command     | Done
+        - Crime command       | Done
+        - Weekly command      | Done
+        - Balance command     | Done
+        - Help commmand       | Done
+        - Withdraw command    | Done
+        - Deposit command     | Done
+        - Work command        | Done
+        - Stream command      | Done
+        - Leaderboard command | Done
+        - Beg command         | Done
+        - Give command        | Done
+        - Shop command        | Not done
+  
+    */
+  
+    if (command === "ping") {
+      const timeTaken = Date.now() - message.createdTimestamp;
+      message.channel.send(
+        `Pong! This message took ${timeTaken} milliseconds to respond.`
+      );
+    }
+  
+    if (command === "join") {
+      if (storage[message.author.id].joined) {
+        message.channel.send("You have already made an account.");
+        return;
+      }
+  
+      const serverId = message.guild.id; // get the ID of the server that the user joined in
+  
+      if (storage[message.author.id]) {
+        const embed = new EmbedBuilder()
+          .setColor("Green")
+          .setAuthor({
+            name: `${message.author.username}`,
+            iconURL: `${message.author.displayAvatarURL()}`,
+            url: `https://discord.com/users/${message.author.id}`,
+          })
+          .setTitle("Created Account")
+          .setDescription(
+            "You have successfully made an account and got <:points:1290881924092657725> 500 added to your cash account."
+          )
+          .setTimestamp();
+  
+        message.channel.send({ embeds: [embed] });
+      }
+  
+      let money = (storage[message.author.id].money =
+        storage[message.author.id].money || 0);
+      storage[message.author.id].joined = true;
+      storage[message.author.id].money += 500;
+      storage[message.author.id].bank = 0;
+      storage[message.author.id].solana = 0;
+      storage[message.author.id].admin=false;
+  
+      // Add the server ID to the user object in storage.json
+      storage[message.author.id].serverId = serverId;
+  
+      save();
+    }
+  
+    if (command === "daily" || command === "collect") {
+      if (!storage[message.author.id].joined) {
+        message.channel.send(
+          `Whoops! You need to join first! Use the \`${prefix}join\` command to join in and get started!`
+        );
+        return;
+      }
+  
+      // Check if the server has a timer entry
+      if (!timer[message.guild.id]) {
+        // If the server does not have a timer entry, create one
+        timer[message.guild.id] = {};
+      }
+      // Check if the user has a timer entry for the server
+      if (!timer[message.guild.id][message.author.id]) {
+        // If the user does not have a timer entry, create one
+        timer[message.guild.id][message.author.id] = Date.now();
+  
+        const embed = new EmbedBuilder()
+          .setColor("Green")
+          .setTitle("Daily collect")
+          .setAuthor({
+            name: `${message.author.username}`,
+            iconURL: `${message.author.displayAvatarURL()}`,
+            url: `https://discord.com/users/${message.author.id}`,
+          })
+          .setDescription(
+            "You have collected you daily income of <:points:1290881924092657725> 500. Come back tomorrow for your next income :)"
+          )
+          .setTimestamp();
+  
+        storage[message.author.id].money += 500;
+        message.channel.send({ embeds: [embed] });
+        save();
+  
+        // Set the timer to expire in 24 hours
+        setTimeout(() => {
+          if (timer[message.guild.id]) {
+            delete timer[message.guild.id][message.author.id];
+          }
+        }, cooldownTimes.command1);
+      } else {
+        // If the user has a timer entry, check how much time has passed since the last usage
+        let timeSinceLastUsage =
+          Date.now() - timer[message.guild.id][message.author.id];
+        // If less than 24 hours have passed, send a message saying the command is on cooldown
+        if (timeSinceLastUsage < cooldownTimes.command1) {
+          let timeRemaining = cooldownTimes.command1 - timeSinceLastUsage;
+          let minutesRemaining = Math.floor(timeRemaining / 60000);
+          let hoursRemaining = Math.floor(minutesRemaining / 60);
+          if (hoursRemaining > 0) {
+            const embed = new EmbedBuilder()
+              .setColor("Green")
+              .setDescription(
+                `This command is on cooldown. Please wait ${hoursRemaining} hour${
+                  hoursRemaining > 1 ? "s" : ""
+                } before trying again.`
+              )
+              .setTimestamp();
+            message.channel.send({ embeds: [embed] });
+          } else {
+            const embed2 = new EmbedBuilder()
+              .setColor("Green")
+              .setDescription(
+                `This command is on cooldown. Please wait ${hoursRemaining} hour${
+                  hoursRemaining > 1 ? "s" : ""
+                } before trying again.`
+              )
+              .setTimestamp();
+            message.channel.send({ embeds: [embed2] });
+          }
+        } else {
+          // If 24 hours or more have passed, delete the timer entry and run the command logic
+          if (timer[message.guild.id]) {
+            delete timer[message.guild.id][message.author.id];
+          }
+          // ...
+        }
+      }
+    }
+  
+    if (command === "crime") {
+      if (!storage[message.author.id].joined) {
+        message.channel.send(
+          `Whoops! You need to join first! Use the \`${prefix}join\` command to join in and get started!`
+        );
+        return;
+      }
+  
+      if (!crimeTimer[message.author.id]) {
+        // If the user does not have a crimeTimer entry, create one
+        crimeTimer[message.author.id] = Date.now();
+  
+        // Run command logic...
+        // Calculate a random amount of money to win or lose
+        const crimeAmount =
+          Math.floor(Math.random() * (MAX_CRIME_AMOUNT - MIN_CRIME_AMOUNT + 1)) +
+          MIN_CRIME_AMOUNT;
+  
+        // Update the user's balance based on the crime result
+        storage[message.author.id].money += crimeAmount;
+        save();
+  
+        // Construct a message to send to the user based on the result of the crime
+        positive = [
+          "You have successfully robbed a bank and gained",
+          "You successfully asassinated the leader of a gang and won",
+          "You became a crimelord and won",
+        ];
+        negative = [
+          "You were caught robbing a bank and lost",
+          "You were injured during a gang fight and lost",
+          "You tried to steal from a gas station and lost",
+          "You forgot to tie your shoes and you slipped and fell and lost",
+        ];
+        if (crimeAmount < 0) {
+          const badMessage = randomNumFromInterval(0, negative.length - 1);
           const embed = new EmbedBuilder()
-            .setColor("Green")
-            .setTitle("New Server Invite")
-            .addFields(
-              { name: `Server name`, value: `${guild.name}` },
-              {
-                name: `Server Owner`,
-                value: `${serverOwner.user.tag} (${serverOwner.user.id})`,
-              }
+            .setColor("Red")
+            .setTitle("Crime")
+            .setAuthor({
+              name: `${message.author.username}`,
+              iconURL: `${message.author.displayAvatarURL()}`,
+              url: `https://discord.com/users/${message.author.id}`,
+            })
+            .setDescription(
+              `${
+                negative[badMessage]
+              } <:points:1290881924092657725> ${-crimeAmount}`
             )
             .setTimestamp();
-          await botOwner.send({ embeds: [embed] });
-          console.log("Sent server invite information to bot owner.");
-        } catch (error) {
-          console.error("Failed to send server invite information:", error);
+          message.channel.send({ embeds: [embed] });
+        } else {
+          const goodMessage = randomNumFromInterval(0, positive.length - 1);
+          const embed = new EmbedBuilder()
+            .setColor("Green")
+            .setTitle("Crime")
+            .setAuthor({
+              name: `${message.author.username}`,
+              iconURL: `${message.author.displayAvatarURL()}`,
+              url: `https://discord.com/users/${message.author.id}`,
+            })
+            .setDescription(
+              `${positive[goodMessage]} <:points:1290881924092657725> ${crimeAmount}`
+            )
+            .setTimestamp();
+          message.channel.send({ embeds: [embed] });
         }
-        
-        //sending welcom message to server
-        const embed2 = new EmbedBuilder()
-              .setColor("DarkGreen")
-              .setTitle("Hello!")
-              .setDescription(`Thank you for inviting me to your server!\ntype ${prefix}help for a list of commands`)
-              .setTimestamp()
-      
-              const channel = guild.systemChannel; // Fetching the default system channel of the guild
-       if (channel) {
-          channel.send({embeds: [embed2]});
-       }
-      });  
-       
-    client.on("ready", () => {
-        console.log("The bot is online!");
-        const activities = [
-            "with the stonks",
-            `in ${client.guilds.cache.size} servers!`,
-            "with the stocks",
-            `in ${client.guilds.cache.size} servers!`,
-            "with the stocks",
-            `in ${client.guilds.cache.size} servers!`,
-            "with the stocks",
-            `in ${client.guilds.cache.size} servers!`,
-            "with the stocks",
-            `in ${client.guilds.cache.size} servers!`,
-            "with the stocks",
-            `in ${client.guilds.cache.size} servers!`,
-            "with the stocks",
-            `in ${client.guilds.cache.size} servers!`,
-            "with the stocks",
-            `in ${client.guilds.cache.size} servers!`,
-            "with the stocks",
-            `in ${client.guilds.cache.size} servers!`,
-          ];
-        
-          setInterval(() => {
-            const status = activities[Math.floor(Math.random() * activities.length)];
-            client.user.setPresence({ activities: [{ name: `${status}` }] });
-          }, 3000);
-        
-    });
-
-    client.on("messageCreate", (message) => {
-        
-      const msgTime=Date.now()
-    
-      const args = message.content.slice(prefix.length).split(/ +/);
-      const command = args.shift().toLowerCase();
-    
-      const messageArray = message.content.split(" ");
-      const argument = messageArray.slice(1);
-      const cmd = messageArray[0];
-      const author = message.author.id
-
-      //JOIN COMMAND
-      if(command === "join"){
-        if(storage[`${author}`] && storage[`${author}`] != "deleted"){
-            message.channel.send("You already have an account")
-            return;
+  
+        // Set the crimeTimer to expire in 10 minutes
+        setTimeout(() => {
+          delete crimeTimer[message.author.id];
+        }, cooldownTimes.command2);
+      } else {
+        // If the user has a crimeTimer entry, check how much time has passed since the last usage
+        let timeSinceLastUsage = Date.now() - crimeTimer[message.author.id];
+        // If less than 10 minutes have passed, send a message saying the command is on cooldown
+        if (timeSinceLastUsage < cooldownTimes.command2) {
+          let timeRemaining =
+            (cooldownTimes.command2 - timeSinceLastUsage) / 60000;
+          const embed = new EmbedBuilder()
+            .setColor("Green")
+            .setDescription(
+              `This command is on cooldown. Please wait ${timeRemaining.toFixed(
+                0
+              )} more minutes before trying again.`
+            )
+            .setTimestamp();
+          message.channel.send({ embeds: [embed] });
+        } else {
+          // If 10 minutes or more have passed, delete the timer entry and run the command logic
+          delete crimeTimer[message.author.id];
+          // ...
         }
-
-        storage[`${author}`]={
-            "cash":500,
-            "bb":0,
-            "ncb":0,
-            "cooldowns":[0,0,0,0]
-        }
-        save()
-        message.channel.send("You have succesfully made a bank account, here's **$500** for you")
       }
-
-      //BALANCE COMMAND
-      if(command === "bal"){
-        if(!storage[`${author}`]){
-            message.channel.send(`You're not in my database, type ${prefix}join to create an account.`)
-            return;
-        }else if(storage[`${author}`] === "deleted"){
-            return message.channel.send(`Your account was deleted, type ${prefix}join to join again`)
+    }
+  
+    if (command === "weekly") {
+      if (!storage[message.author.id].joined) {
+        message.channel.send(
+          `Whoops! You need to join first! Use the \`${prefix}join\` command to join in and get started!`
+        );
+        return;
+      }
+  
+      if (!weeklyTimer[message.author.id]) {
+        // If the user does not have a crimeTimer entry, create one
+        weeklyTimer[message.author.id] = Date.now();
+  
+        // Run command logic...
+        const embed = new EmbedBuilder()
+          .setColor("Green")
+          .setAuthor({
+            name: `${message.author.username}`,
+            iconURL: `${message.author.displayAvatarURL()}`,
+            url: `https://discord.com/users/${message.author.id}`,
+          })
+          .setTitle("Weekly Collect")
+          .setDescription(
+            "You have now collected your weekly allowance of <:points:1290881924092657725> 750."
+          )
+          .setTimestamp();
+  
+        storage[message.author.id].money += 750;
+        message.channel.send({ embeds: [embed] });
+        save();
+      } else {
+        // If the user has a weeklyTimer entry, check how much time has passed since the last usage
+        let timeSinceLastUsage = Date.now() - weeklyTimer[message.author.id];
+        // If less than 10 minutes have passed, send a message saying the command is on cooldown
+        if (timeSinceLastUsage < cooldownTimes.command3) {
+          let timeRemaining =
+            (cooldownTimes.command3 - timeSinceLastUsage) / 60000;
+          const embed = new EmbedBuilder()
+            .setColor("Green")
+            .setDescription(
+              `This command is on cooldown. Please come back later to collect your weekly allowance.`
+            )
+            .setTimestamp();
+          message.channel.send({ embeds: [embed] });
+        } else {
+          // If 10 minutes or more have passed, delete the timer entry and run the command logic
+          delete weeklyTimer[message.author.id];
+          // ...
         }
-        const EMBED = new EmbedBuilder()
+      }
+    }
+  
+    if (command === "balance" || command === "bal") {
+      if (!storage[message.author.id].joined) {
+        message.channel.send(
+          `Whoops! You need to join first! Use the \`${prefix}join\` command to join in and get started!`
+        );
+        return;
+      }
+  
+      const userID = args[0];
+  
+      if (!userID) {
+        const totalMoney =
+          storage[message.author.id].bank + storage[message.author.id].money;
+  
+        const embed = new EmbedBuilder()
+          .setColor("Green")
+          .setTitle("Balance")
+          .setAuthor({
+            name: `${message.author.username}`,
+            iconURL: `${message.author.displayAvatarURL()}`,
+            url: `https://discord.com/users/${message.author.id}`,
+          })
+          .setDescription(`Here is your current balance`)
+          .addFields(
+            {
+              name: "**Bank**",
+              value: `**<:points:1290881924092657725> ${
+                storage[message.author.id].bank
+              }**`,
+              inline: true,
+            },
+            {
+              name: "**Cash**",
+              value: `**<:points:1290881924092657725> ${
+                storage[message.author.id].money
+              }**`,
+              inline: true,
+            },
+            {
+              name: "**Total**",
+              value: `**<:points:1290881924092657725> ${totalMoney}**`,
+              inline: true,
+            },
+            {
+              name: "**Solana**",
+              value: `**<:points:1290881924092657725> ${
+                storage[message.author.id].solana
+              }**`,
+              inline: true,
+            }
+          )
+          .setTimestamp();
+  
+        message.channel.send({ embeds: [embed] });
+        return;
+      }
+  
+      const targetUser =
+        message.mentions.users.first() || client.users.cache.get(userID);
+  
+      if (!targetUser) {
+        message.channel.send(
+          "Please mention a user or provide their ID to check their balance."
+        );
+        return;
+      }
+  
+      const targetMember = message.guild.members.cache.get(targetUser.id);
+      if (
+        !targetMember ||
+        !storage[targetMember.id] ||
+        !storage[targetMember.id].joined
+      ) {
+        message.channel.send("That user has not joined or does not exist.");
+        return;
+      }
+  
+      const targetStorage = storage[targetMember.id];
+      const totalMoney = targetStorage.bank + targetStorage.money;
+  
+      const embed = new EmbedBuilder()
         .setColor("Green")
-        .setTitle(`${message.author.username}`)
-        .setDescription(`**Noah's Classic Bank:** $${storage[`${author}`].ncb}\n**Bingelle Bank:** $${storage[`${author}`].bb}\n**cash:** ${storage[`${author}`].cash}`)
-        message.channel.send({embeds: [EMBED]})
+        .setTitle("Balance")
+        .setAuthor({
+          name: `${targetUser.username}`,
+          iconURL: `${targetUser.displayAvatarURL()}`,
+          url: `https://discord.com/users/${targetUser.id}`,
+        })
+        .setDescription(`Here is the balance for ${targetUser.username}`)
+        .addFields(
+          {
+            name: "**Bank**",
+            value: `**<:points:1290881924092657725> ${targetStorage.bank}**`,
+            inline: true,
+          },
+          {
+            name: "**Cash**",
+            value: `**<:points:1290881924092657725> ${targetStorage.money}**`,
+            inline: true,
+          },
+          {
+            name: "**Total**",
+            value: `**<:points:1290881924092657725> ${totalMoney}**`,
+            inline: true,
+          }
+        )
+        .setTimestamp();
+  
+      message.channel.send({ embeds: [embed] });
+    }
+  
+    if (command === "commands" || command === "help") {
+      const embed = new EmbedBuilder()
+        .setColor("Green")
+        .setTitle("Help")
+        .setAuthor({
+          name: `${message.author.username}`,
+          iconURL: `${message.author.displayAvatarURL()}`,
+          url: `https://discord.com/users/${message.author.id}`,
+        })
+        .setDescription(
+          `These are the list of commands and the current prefix is \`${prefix}\`\n\n**ping**\nChecks to see if the bot is online\n\n**join**\nCreate an account\n\n**daily**\nAllows you to collect your daily income\n\n**crime**\nAllows you to commit a crime\n\n**weekly**\nAllows you to collect your weekly income\n\n**bal**\nChecks your current balance\n\n**work**\nCollect money for work\n\n**beg**\nBeg for money\n\n**stream**\nStream for some money\n\n**leaderboard**\nChecks what position you are on the leaderboard\n\n**with (amount)**\nWill withdraw a certain amount of money from your bank account to your cash amount\n\n**dep (amount)**\nWill deposit a certain amount of money from your cash account to your bank account\n\n**give (userID) (amount)**\nWill give a user of your choice a certain amount of your money **(currently not working)**\n\n**buy (amount)**\nWill allow you buy solana\n\n**sell (amount)**\nWill allow you to sell solana\n\n**cost**\nWill show the current cost of solana (updates every 5 minutes)`
+        )
+        .setTimestamp();
+  
+      message.channel.send({ embeds: [embed] });
+    }
+  
+    if (command === "work") {
+      if (!storage[message.author.id].joined) {
+        message.channel.send(
+          `Whoops! You need to join first! Use the \`${prefix}join\` command to join in and get started!`
+        );
+        return;
       }
-
-      if(command === "job"){
-        if(!storage[`${author}`]){
-            message.channel.send(`You're not in my database, type ${prefix}join to create an account.`)
-            return;
-        }else if(storage[`${author}`] === "deleted"){
-            return message.channel.send(`Your account was deleted, type ${prefix}join to join again`)
+  
+      if (!fiveMinTimer[message.author.id]) {
+        // If the user does not have a fiveMinTimer entry, create one
+        fiveMinTimer[message.author.id] = Date.now();
+  
+        // Run command logic...
+        const workMessages = [
+          "You worked hard today and earned",
+          "Your boss was impressed with your work and gave you a bonus of",
+          "You worked overtime and earned an additional",
+          "Your hard work and dedication have paid off with a salary increase of",
+          "You worked as a construction worker and earned",
+          "You worked as a waiter/waitress and earned",
+          "You worked as a retail sales associate and earned",
+          "You worked as a freelance writer and earned",
+          "You worked as a software developer and earned",
+          "You worked as a teacher and earned",
+          "You worked as a plumber and earned",
+          "You worked as a chef and earned",
+          "You worked as a landscaper and earned",
+          "You worked as a customer service representative and earned",
+          "You worked as a delivery driver and earned",
+          "You worked as a data analyst and earned",
+          "You worked as a security guard and earned",
+          "You worked as a marketing specialist and earned",
+          "You worked as a hair stylist and earned",
+          "You worked as a mechanic and earned",
+          "You worked as a social media manager and earned",
+          "You worked as a financial advisor and earned",
+        ];
+  
+        const workAmount = randomNumFromInterval(50, 150);
+        storage[message.author.id].money += workAmount;
+        save();
+  
+        const randomMesssage = randomNumFromInterval(0, workMessages.length - 1);
+        const embed = new EmbedBuilder()
+          .setColor("Green")
+          .setTitle("Work")
+          .setAuthor({
+            name: `${message.author.username}`,
+            iconURL: `${message.author.displayAvatarURL()}`,
+            url: `https://discord.com/users/${message.author.id}`,
+          })
+          .setDescription(
+            `${workMessages[randomMesssage]} <:points:1290881924092657725> ${workAmount}`
+          )
+          .setTimestamp();
+  
+        message.channel.send({ embeds: [embed] });
+  
+        // Set the fiveMinTimer to expire in 5 minutes
+        setTimeout(() => {
+          delete fiveMinTimer[message.author.id];
+        }, cooldownTimes.command4);
+      } else {
+        // If the user has a fiveMinTimer entry, check how much time has passed since the last usage
+        let timeSinceLastUsage = Date.now() - fiveMinTimer[message.author.id];
+        // If less than 10 minutes have passed, send a message saying the command is on cooldown
+        if (timeSinceLastUsage < cooldownTimes.command4) {
+          let timeRemaining =
+            (cooldownTimes.command4 - timeSinceLastUsage) / 60000;
+          const embed = new EmbedBuilder()
+            .setColor("Green")
+            .setDescription(
+              `This command is on cooldown. Please wait ${timeRemaining.toFixed(
+                0
+              )} more minutes before trying again.`
+            )
+            .setTimestamp();
+          message.channel.send({ embeds: [embed] });
+        } else {
+          // If 10 minutes or more have passed, delete the timer entry and run the command logic
+          delete fiveMinTimer[message.author.id];
+          // ...
         }
-
-        if(storage[`${author}`].job){
-            return message.channel.send("You already have a job")
-        }
-        let jobs = ["plumber","electrician","yard woker","fast food worker"]
-        let job = jobs[Math.floor(Math.random()*jobs.length)]
-        storage[`${author}`].job = job;
-        storage[`${author}`].payRate = 15
-        storage[`${author}`].workCount = 0;
-        save()
-        message.channel.send(`You got a job as a ${job} earning $15 every time you \`$work\``)
-
       }
+    }
+  
+    if (command === "beg") {
+      if (!storage[message.author.id].joined) {
+        message.channel.send(
+          `Whoops! You need to join first! Use the \`${prefix}join\` command to join in and get started!`
+        );
+        return;
+      }
+  
+      const begMoney = randomNumFromInterval(50, 150);
+      storage[message.author.id].money += begMoney;
+      save();
+  
+      if (!begTimer[message.author.id]) {
+        // If the user does not have a begTimer entry, create one
+        begTimer[message.author.id] = Date.now();
+  
+        // Run command logic...
+        const begMessages = [
+          "Mr. Beast comes along and because you watched some of his videos, he gives you",
+          "You are facing a financial situation and someone gives you",
+          "You try to raise money for a soup charity and gain",
+          "Someone sees you and feels bad for you. They offer you",
+          "You ask for money to start up a small business and someone offers you",
+          "You walk around and find",
+          "You tell a sob story to your friend and they give you",
+        ];
+        const messageIndex = randomNumFromInterval(0, begMessages.length - 1);
+  
+        const embed = new EmbedBuilder()
+          .setColor("Green")
+          .setAuthor({
+            name: `${message.author.username}`,
+            iconURL: `${message.author.displayAvatarURL()}`,
+            url: `https://discord.com/users/${message.author.id}`,
+          })
+          .setDescription(
+            `${begMessages[messageIndex]} <:points:1290881924092657725> ${begMoney}`
+          )
+          .setTimestamp();
+        message.channel.send({ embeds: [embed] });
+  
+        // Set the begTimer to expire in 5 minutes
+        setTimeout(() => {
+          delete begTimer[message.author.id];
+        }, cooldownTimes.command4);
+      } else {
+        // If the user has a begTimer entry, check how much time has passed since the last usage
+        let timeSinceLastUsage = Date.now() - begTimer[message.author.id];
+        // If less than 10 minutes have passed, send a message saying the command is on cooldown
+        if (timeSinceLastUsage < cooldownTimes.command4) {
+          let timeRemaining =
+            (cooldownTimes.command4 - timeSinceLastUsage) / 60000;
+          const embed = new EmbedBuilder()
+            .setColor("Green")
+            .setTitle("Beg")
+            .setDescription(
+              `This command is on cooldown. Please wait ${timeRemaining.toFixed(
+                0
+              )} more minutes before trying again.`
+            )
+            .setTimestamp();
+          message.channel.send({ embeds: [embed] });
+        } else {
+          // If 10 minutes or more have passed, delete the timer entry and run the command logic
+          delete begTimer[message.author.id];
+          // ...
+        }
+      }
+    }
+  
+    if (command === "stream") {
+      if (!storage[message.author.id].joined) {
+        message.channel.send(
+          `Whoops! You need to join first! Use the \`${prefix}join\` command to join in and get started!`
+        );
+        return;
+      }
+  
+      if (!streamTimer[message.author.id]) {
+        // If the user does not have a streamTimer entry, create one
+        streamTimer[message.author.id] = Date.now();
+  
+        // Run command logic...
+        const streamAmount = randomNumFromInterval(50, 150);
+        storage[message.author.id].money += streamAmount;
+        save();
+  
+        const streamerNames = [
+          "JoeIsPro",
+          "Classic Noah",
+          "Bob",
+          "LunaStreams",
+          "GamingWithGrace",
+          "PixelPlaytime",
+          "StreamQueen",
+          "TheStreamMachine",
+          "PlayfulPanda",
+          "TechTonic",
+          "StreamSiren",
+          "GamerGoddess",
+          "CyberSapien",
+          "DigitalDreamer",
+          "GameGeek",
+          "PixelPirate",
+          "TheGamingGuru",
+          "PixelPal",
+          "TheStreamingSorcerer",
+          "DigitalDynamo",
+          "Mrrrrrr BEEEEASSTT from Ohio",
+        ];
+        const messageIndex = randomNumFromInterval(0, streamerNames.length - 1);
+        const embed = new EmbedBuilder()
+          .setColor("Green")
+          .setAuthor({
+            name: `${message.author.username}`,
+            iconURL: `${message.author.displayAvatarURL()}`,
+            url: `https://discord.com/users/${message.author.id}`,
+          })
+          .setTitle("Stream")
+          .setDescription(
+            `${streamerNames[messageIndex]} just donated <:points:1290881924092657725> ${streamAmount} for streaming an awesome game`
+          )
+          .setTimestamp();
+        message.channel.send({ embeds: [embed] });
+  
+        // Set the streamTimer to expire in 5 minutes
+        setTimeout(() => {
+          delete streamTimer[message.author.id];
+        }, cooldownTimes.command4);
+      } else {
+        // If the user has a streamTimer entry, check how much time has passed since the last usage
+        let timeSinceLastUsage = Date.now() - streamTimer[message.author.id];
+        // If less than 10 minutes have passed, send a message saying the command is on cooldown
+        if (timeSinceLastUsage < cooldownTimes.command4) {
+          let timeRemaining =
+            (cooldownTimes.command4 - timeSinceLastUsage) / 60000;
+          const embed = new EmbedBuilder()
+            .setColor("Green")
+            .setDescription(
+              `This command is on cooldown. Please wait ${timeRemaining.toFixed(
+                0
+              )} more minutes before trying again.`
+            )
+            .setTimestamp();
+          message.channel.send({ embeds: [embed] });
+        } else {
+          // If 10 minutes or more have passed, delete the timer entry and run the command logic
+          delete streamTimer[message.author.id];
+          // ...
+        }
+      }
+    }
+  
+    if (command === "leaderboard" || command === "lb") {
+      if (!storage[message.author.id].joined) {
+        message.channel.send(
+          `Whoops! You need to join first! Use the \`${prefix}join\` command to join in and get started!`
+        );
+        return;
+      }
+  
+      const guildMembers = message.guild.members.cache.filter((member) => {
+        return storage[member.id] && storage[member.id].joined;
+      });
+  
+      const leaderboard = guildMembers
+        .sort((a, b) => {
+          const totalAmountA = storage[a.id].money + storage[a.id].bank;
+          const totalAmountB = storage[b.id].money + storage[b.id].bank;
+          return totalAmountB - totalAmountA;
+        })
+        .first(10); // Get the top 10 members based on their total amount
+  
+      const embed = new EmbedBuilder()
+        .setColor("Green")
+        .setAuthor({
+          name: `${message.author.username}`,
+          iconURL: `${message.author.displayAvatarURL()}`,
+          url: `https://discord.com/users/${message.author.id}`,
+        })
+        .setTitle(`Leaderboard for ${message.guild.name}`)
+        .setDescription(
+          leaderboard
+            .map(
+              (member, index) =>
+                `${index + 1}. ${
+                  member.user.username
+                } - <:points:1290881924092657725> ${
+                  storage[member.id].money + storage[member.id].bank
+                }`
+            )
+            .join("\n")
+        )
+        .setTimestamp();
+  
+      message.channel.send({ embeds: [embed] });
+    }
+  
+    if (command === "withdraw" || command === "with") {
+      if (!storage[message.author.id].joined) {
+        message.channel.send(
+          `Whoops! You need to join first! Use the \`${prefix}join\` command to join in and get started!`
+        );
+        return;
+      }
+      const amount = args[0];
+  
+      if (!amount) {
+        message.channel.send("Please specify the amount");
+        return;
+      }
+  
+      if (amount === "all") {
+        storage[message.author.id].money += storage[message.author.id].bank;
+        storage[message.author.id].bank = 0;
+  
+        const embed = new EmbedBuilder()
+          .setTitle("Withdraw")
+          .setColor("Green")
+          .setAuthor({
+            name: `${message.author.username}`,
+            iconURL: `${message.author.displayAvatarURL()}`,
+            url: `https://discord.com/users/${message.author.id}`,
+          })
+          .setDescription(
+            `You have successfully withdrawn all your money to your cash account`
+          )
+          .setTimestamp();
+  
+        message.channel.send({ embeds: [embed] });
+      } else {
+        const amountNumber = parseInt(amount);
+  
+        if (isNaN(amountNumber) || amountNumber <= 0) {
+          message.channel.send(
+            "Please choose an actual number or a reasonable number"
+          );
+          return;
+        }
+  
+        if (amountNumber > storage[message.author.id].bank) {
+          message.channel.send(
+            "This is more than you have in your bank account. Please try again..."
+          );
+          return;
+        }
+  
+        storage[message.author.id].bank -= amountNumber;
+        storage[message.author.id].money += amountNumber;
+  
+        const embed = new EmbedBuilder()
+          .setTitle("Withdraw")
+          .setColor("Green")
+          .setAuthor({
+            name: `${message.author.username}`,
+            iconURL: `${message.author.displayAvatarURL()}`,
+            url: `https://discord.com/users/${message.author.id}`,
+          })
+          .setDescription(
+            `You have successfully withdrawn <:points:1290881924092657725> ${amountNumber} out of your bank account`
+          )
+          .setTimestamp();
+  
+        message.channel.send({ embeds: [embed] });
+      }
+  
+      save();
+    }
+  
+    if (command === "deposit" || command === "dep") {
+      if (!storage[message.author.id].joined) {
+        message.channel.send(
+          `Whoops! You need to join first! Use the \`${prefix}join\` command to join in and get started!`
+        );
+        return;
+      }
+      const amount = args[0];
+  
+      if (!amount) {
+        message.channel.send("Please specify an amount");
+        return;
+      }
+  
+      if (amount === "all") {
+        storage[message.author.id].bank += storage[message.author.id].money;
+        storage[message.author.id].money = 0;
+  
+        const embed = new EmbedBuilder()
+          .setTitle("Deposit")
+          .setColor("Green")
+          .setAuthor({
+            name: `${message.author.username}`,
+            iconURL: `${message.author.displayAvatarURL()}`,
+            url: `https://discord.com/users/${message.author.id}`,
+          })
+          .setDescription(
+            `You have successfully deposit all your money to your bank account`
+          )
+          .setTimestamp();
+  
+        message.channel.send({ embeds: [embed] });
+      } else {
+        const amountNumber = parseInt(amount);
+  
+        if (isNaN(amountNumber) || amountNumber <= 0) {
+          message.channel.send(
+            "Please choose an actual number or a reasonable number"
+          );
+          return;
+        }
+  
+        if (amountNumber > storage[message.author.id].money) {
+          message.channel.send(
+            "This is more than you have in your cash account. Please try again..."
+          );
+          return;
+        }
+  
+        storage[message.author.id].money -= amountNumber;
+        storage[message.author.id].bank += amountNumber;
+  
+        const embed = new EmbedBuilder()
+          .setTitle("Deposit")
+          .setColor("Green")
+          .setAuthor({
+            name: `${message.author.username}`,
+            iconURL: `${message.author.displayAvatarURL()}`,
+            url: `https://discord.com/users/${message.author.id}`,
+          })
+          .setDescription(
+            `You have successfully deposited <:points:1290881924092657725> ${amountNumber} `
+          )
+          .setTimestamp();
+  
+        message.channel.send({ embeds: [embed] });
+      }
+  
+      save();
+    }
+  
+    if (command === "add") {
+      if (!storage[message.author.id].joined) {
+        message.channel.send(`Lol nice try bud`);
+        return;
+      }
+  
+      if (!storage[message.author.id].admin) {
+        message.channel.send("Nice try bud. That's not gonna work here :)");
+        return;
+      } else {
+        let recipientUser;
+        const userId = args[0];
+        const amount = parseInt(args[1]);
+  
+        if (message.mentions.users.size > 0) {
+          recipientUser = message.mentions.users.first();
+        } else if (userId && client.users.cache.has(userId)) {
+          recipientUser = client.users.cache.get(userId);
+        } else {
+          message.channel.send("Please mention a user or provide their ID.");
+          return;
+        }
+  
+        // const member = client.members.cache.get(message.author.id);
+  
+        if (!storage[userId].joined) {
+          message.channel.send(
+            `Whoops! Looks like this user needs to join first! Tell them to use the \`${prefix}join\` command to join in and get started!`
+          );
+          return;
+        }
+  
+        if (!userId) {
+          message.channel.send("Please specify the id");
+          return;
+        }
+  
+        if (!amount) {
+          message.channel.send("Please specify the amount");
+          return;
+        }
+  
+        storage[userId].money += amount;
+        save();
+  
+        const embed = new EmbedBuilder()
+          .setColor("Green")
+          .setTitle("Added Money")
+          .setDescription(
+            `Added <:points:1290881924092657725> ${amount} to ${recipientUser.username}'s bank account.`
+          )
+          .setTimestamp();
+  
+        message.channel.send({ embeds: [embed] });
+      }
+    } 
+  
+    if (command === "remove") {
+      if (!storage[message.author.id].joined) {
+        message.channel.send(`Lol nice try bud. Not gonna happen :)`);
+        return;
+      }
+  
+      if (!storage[message.author.id].admin) {
+        message.channel.send("Nice try bud. That's not gonna happen here :)");
+        return;
+      } else {
+        let recipientUser;
+        const userId = args[0];
+        const amount = parseInt(args[1]);
+  
+        if (message.mentions.users.size > 0) {
+          recipientUser = message.mentions.users.first();
+        } else if (userId && client.users.cache.has(userId)) {
+          recipientUser = client.users.cache.get(userId);
+        } else {
+          message.channel.send("Please mention a user or provide their ID.");
+          return;
+        }
+  
+        // const member = client.members.cache.get(message.author.id);
+  
+        if (!storage[userId].joined) {
+          message.channel.send(
+            `Whoops! Looks like this user needs to join first! Tell them to use the \`${prefix}join\` command to join in and get started!`
+          );
+          return;
+        }
+  
+        if (!userId) {
+          message.channel.send("Please specify the id");
+          return;
+        }
+  
+        if (!amount) {
+          message.channel.send("Please specify the amount");
+          return;
+        }
+  
+        storage[userId].money -= amount;
+        save();
+  
+        const embed = new EmbedBuilder()
+          .setColor("Green")
+          .setTitle("Removed Money")
+          .setDescription(
+            `Removed <:points:1290881924092657725> ${amount} to ${recipientUser.username}'s bank account.`
+          )
+          .setTimestamp();
+  
+        message.channel.send({ embeds: [embed] });
+      }
+    }
+  
+    if (command === "buy") {
+      if (!storage[message.author.id].joined) {
+        message.channel.send(
+          `Whoops! You need to join first! Use the \`${prefix}join\` command to join in and get started!`
+        );
+        return;
+      }
+  
+  
+      let numSolana = parseInt(args[0]);
 
-      // WORK COMMAND
-      if(command === "work"){
-        if(!storage[`${author}`]){
-            message.channel.send(`You're not in my database, type ${prefix}join to create an account.`)
+      if(args[0] === "all"){
+        numSolana = Math.floor(storage[message.author.id].cash/costOfSolana);
+      }
+  
+      if (!numSolana) {
+        message.channel.send("Please specify the amount of Solana you want to buy");
+        return;
+      }
+  
+      if (isNaN(numSolana) || numSolana < 1) {
+        message.channel.send("Please choose an actual number or a reasonable number");
+        return;
+      }
+  
+      if (storage[message.author.id].money < costOfSolana * numSolana) {
+        message.channel.send("You do not have enough money to buy that amount of Solana");
+        return;
+      }
+  
+      storage[message.author.id].money -= costOfSolana * numSolana;
+      storage[message.author.id].solana += numSolana;
+      save();
+  
+      const embed = new EmbedBuilder()
+      .setColor("Green")
+      .setTitle("Buy")
+      .setAuthor({
+        name: `${message.author.username}`,
+        iconURL: `${message.author.displayAvatarURL()}`,
+        url: `https://discord.com/users/${message.author.id}`,
+      })
+      .setDescription(`You have successfully bought ${numSolana} Solana for <:points:1290881924092657725> ${costOfSolana * numSolana}`)
+      .setTimestamp();
+  
+      message.channel.send({ embeds: [embed] });
+     
+    }
+  
+    if (command === "sell") {
+      if (!storage[message.author.id].joined) {
+        message.channel.send(
+          `Whoops! You need to join first! Use the \`${prefix}join\` command to join in and get started!`
+        );
+        return;
+      }
+  
+      let sellNumSolana = parseInt(args[0]);
+
+      if(args[0] === "all"){
+        sellNumSolana = storage[message.author.id].solana;
+      }
+  
+      if (!sellNumSolana) {
+        message.channel.send("Please specify the amount of Solana you want to sell");
+        return;
+      }
+  
+      if (isNaN(sellNumSolana) || sellNumSolana < 1) {
+        message.channel.send("Please choose an actual number or a reasonable number");
+        return;
+      }
+  
+      if (storage[message.author.id].solana < sellNumSolana) {
+        message.channel.send("You do not have enough Solana to sell that amount");
+        return;
+      }
+  
+      storage[message.author.id].money += costOfSolana * sellNumSolana;
+      storage[message.author.id].solana -= sellNumSolana;
+      save();
+  
+      const embed = new EmbedBuilder()
+      .setColor("Green")
+      .setTitle("Sell")
+      .setAuthor({
+        name: `${message.author.username}`,
+        iconURL: `${message.author.displayAvatarURL()}`,
+        url: `https://discord.com/users/${message.author.id}`,
+      })
+      .setDescription(`You have sold ${sellNumSolana} Solana for <:points:1290881924092657725> ${costOfSolana * sellNumSolana}`)
+      .setTimestamp();
+  
+      message.channel.send({ embeds: [embed] });
+    }
+  
+    if (command === "cost") {
+      const embed = new EmbedBuilder()
+      .setTitle("Cost of Solana")
+      .setColor("Green")
+      .setDescription(`The current cost of Solana is <:points:1290881924092657725> ${costOfSolana}`)
+      .setAuthor({
+        name: `${message.author.username}`,
+        iconURL: `${message.author.displayAvatarURL()}`,
+        url: `https://discord.com/users/${message.author.id}`,
+      })
+      .setTimestamp()
+  
+      message.channel.send({ embeds: [embed] });
+
+      message.channel.send(`You can buy ${Math.floor(storage[message.author.id].cash/costOfSolana)} Solanas and have ${storage[message.author.id].solana} Solanas to sell.`)
+    }
+
+    if(command === "gamble"){
+        console.log("oh, we've got some gambling!");
+        let amount = parseInt(args[0]);
+        if(storage[message.author.id].cash < amount || !amount || amount <= 0){
+            const embed = new EmbedBuilder()
+            .setTitle("Casino")
+            .setColor("DarkRed")
+            .setDescription("You must enter a valid number to gamble!")
+            .setAuthor({
+                name:`${message.author.useranme}`,
+                iconURL:`${message.author.displayAvatarURL()}`,
+                url:`https://discord.com/users/${message.author.id}`,
+            })
+            .setTimestamp()
+            
+            message.channel.send({ embeds: [embed] });
             return;
-        }else if(storage[`${author}`] === "deleted"){
-            return message.channel.send(`Your account was deleted, type ${prefix}join to join again`)
         }
-        let a = 0;
-        if(storage[`${author}`].cooldowns[a] >= Date.now()){
-            let waitTime = parseInt(storage[`${author}`].cooldowns[a])
-            waitTime/=60000
-            return message.channel.send(`That command is on cool down, please wait ${Math.floor(waitTime-Date.now()/60000)} minutes`)
-        }
-        storage[`${author}`].cooldowns[a] = Date.now()+times[a]
-        if(storage[`${author}`].job){
-            let cash = storage[`${author}`].payRate
-        storage[`${author}`].cash+=cash;
-        storage[`${author}`].workCount ++
-        let job = storage[`${author}`].job
-        message.channel.send(`You just earned $${cash} working as a${job}.`)
-        if(storage[`${author}`].workCount > 20){
-            storage[`${author}`].workCount = 0;
-            storage[`${author}`].payRate+=2
-            save()
-            message.channel.send(`You got a raise! You now make $${storage[`${author}`].payRate}`)
-        }
-        save()
+        let earnings = Math.random()*10000;
+        earnings%=amount*4;
+        earnings-=amount*2;
+        earnings = Math.floor(earnings);
+        storage[message.author.id].cash+=earnings;
+        save();
+        if(earnings>=0){
+            const embed = new EmbedBuilder()
+            .setTitle("Casino")
+            .setColor("Green")
+            .setDescription(`You gambled and earned <:points:1290881924092657725> ${earnings}!`)
+            .setAuthor({
+                name:`${message.author.username}`,
+                iconURL:`${message.author.displayAvatarURL()}`,
+                url:`https://discord.com/users/${message.author.id}`,
+            })
+            .setTimestamp()
+            message.channel.send({ embeds: [embed] });
+            return;
         }else{
-        let jobs = ["building a barn","at a fast food resteraunt","mowing your neighbors lawn","washing cars","in a competition"]
-        let cash = Math.floor(Math.random()*100)
-        storage[`${author}`].cash+=cash;
-        save()
-        let job = jobs[Math.floor(Math.random()*jobs.length)]
-        if(cash < 10){
-            message.channel.send(`You got $${cash} by helping a friend`)
-        }else{
-            message.channel.send(`You just earned $${cash} ${job}.`)
-        }}
-      }
-
-      //BEG COMMAND
-      if(command === "beg"){
-        if(!storage[`${author}`]){
-            message.channel.send(`You're not in my database, type ${prefix}join to create an account.`)
+            
+            const embed = new EmbedBuilder()
+            .setTitle("Casino")
+            .setColor("DarkRed")
+            .setDescription(`You gambled and lost <:points:1290881924092657725> ${earnings*-1}!`)
+            .setAuthor({
+                name:`${message.author.username}`,
+                iconURL:`${message.author.displayAvatarURL()}`,
+                url:`https://discord.com/users/${message.author.id}`,
+            })
+            .setTimestamp()
+            message.channel.send({ embeds: [embed] });
             return;
-        }else if(storage[`${author}`] === "deleted"){
-            return message.channel.send(`Your account was deleted, type ${prefix}join to join again`)
-        }
-        let a = 1;
-        if(storage[`${author}`].cooldowns[a] >= Date.now()){
-            let waitTime = parseInt(storage[`${author}`].cooldowns[a])
-            waitTime/=60000
-            return message.channel.send(`That command is on cool down, please wait ${Math.floor(waitTime-Date.now()/60000)} minutes`)
-        }
-        storage[`${author}`].cooldowns[a] = Date.now()+times[a]
-        let jobs = ["from the church","at the street corner","","you helped last month"]
-        let cash = Math.floor(Math.random()*75)
-        storage[`${author}`].cash+=cash;
-        save()
-        let job = jobs[Math.floor(Math.random()*jobs.length)]
-        if(cash < 10){
-            message.channel.send(`You got $${cash} from a helping friend`)
-        }else{
-            message.channel.send(`Somone ${job} gave you $${cash}.`)
-        }
-      }
-
-      //DAILY COMMAND
-      if(command === "daily"){
-        if(!storage[`${author}`]){
-            message.channel.send(`You're not in my database, type ${prefix}join to create an account.`)
-            return;
-        }else if(storage[`${author}`] === "deleted"){
-            return message.channel.send(`Your account was deleted, type ${prefix}join to join again`)
-        }
-        let a = 2;
-        if(storage[`${author}`].cooldowns[a] >= Date.now()){
-            let waitTime = parseInt(storage[`${author}`].cooldowns[a])
-            waitTime/=60000
-            waitTime-=Date.now()/60000
-            waitTime = Math.floor(waitTime)
-            if(waitTime > 60 && waitTime < 1440){
-                waitTime/=60
-                waitTime=`${Math.floor(waitTime)} hours`
-            }else if(waitTime >= 1440){
-                waitTime/=1440
-                waitTime=`${Math.floor(waitTime)} days`
-            }else {
-                waitTime = `${Math.floor(waitTime)} minutes`
-            }
-            return message.channel.send(`That command is on cool down, please wait ${waitTime}`)
-        }
-        storage[`${author}`].cooldowns[a] = Date.now()+times[a]
-        storage[`${author}`].cash+=500;
-        save()
-        message.channel.send("You have collected your daily $500")
-      }
-
-      //WEEKLY COMMAND
-      if(command === "weekly"){
-        if(!storage[`${author}`]){
-            message.channel.send(`You're not in my database, type ${prefix}join to create an account.`)
-            return;
-        }else if(storage[`${author}`] === "deleted"){
-            return message.channel.send(`Your account was deleted, type ${prefix}join to join again`)
-        }
-        let a = 3;
-        if(storage[`${author}`].cooldowns[a] >= Date.now()){
-            let waitTime = parseInt(storage[`${author}`].cooldowns[a])
-            waitTime/=60000
-            waitTime-=Date.now()/60000
-            waitTime = Math.floor(waitTime)
-            if(waitTime > 60 && waitTime < 1440){
-                waitTime/=60
-                waitTime=`${Math.floor(waitTime)} hours`
-            }else if(waitTime >= 1440){
-                waitTime/=1440
-                waitTime=`${Math.floor(waitTime)} days`
-            }else {
-                waitTime = `${Math.floor(waitTime)} minutes`
-            }
-            return message.channel.send(`That command is on cool down, please wait ${waitTime}`)
-        }
-        storage[`${author}`].cooldowns[a] = Date.now()+times[a]
-        storage[`${author}`].cash+=750;
-        save()
-        message.channel.send("You have collected your daily $750")
-      }
-
-      //DELETE ACCOUNT COMMAND
-      if(command === "delacc"){
-        if(!storage[`${author}`]){
-            message.rechannel.sendply(`You're already not in my databas.`)
-            return;
-        }else if(storage[`${author}`] === false){
-            return message.channel.send(`Your account was already deleted`)
-        }
-        if(bool != "del"){
-            message.channel.send(`Are you sure you want to delete your account?\nIf so type ${prefix}delacc again.`)
-            bool = "del"
-        }else{
-            storage[`${author}`]=false
-            message.channel.send(`${message.author.username}'s account has been deleted.`)
-            bool = false
-            save()
-        }
-      }
-
-      //RESET COMMAND
-      if(command === "reset"){
-        if(!storage[`${author}`]){
-            message.rechannel.sendply(`You're already not in my databas.`)
-            return;
-        }else if(storage[`${author}`] === "deleted"){
-            return message.channel.send(`Your account was already deleted`)
-        }
-        if(bool != "reset"){
-            message.channel.send(`Are you sure you want to reset your account?\nIf so type ${prefix}reset again.`)
-            bool = "reset"
-        }else{
-            storage[`${author}`]={
-                "cash":500,
-                "bb":0,
-                "ncb":0,
-                "cooldowns":[0,0,0,0]
-            }
-            save()
-            bool = false
-            message.channel.send(`Your account has been reset`)
         }
 
-
-
-      }
-
-      //HELP COMMAND
-      if(command === "help"){
-        var commands = ["join","work","beg","daily","weekly","shop","delacc"]
-        var defs = ["create an account","collect some money ($0 - $100)","collect some money ($0 - $75)","collect 500 per 24 hours","collect $750 per 7 days","Item shop (WIP)","delete your account"]  
-        let cmnds = "";
-        for(var i = 0; i < commands.length; i++){
-          cmnds += `> - **${prefix}${commands[i]}**\n> ${defs[i]}\n`
-        }
-        message.channel.send(cmnds);
-      }
-
-      //DEP COMMAND
-      if(command === "dep"){
-        let cash;
-        if(args[1]){
-            if(args[1] === "all"){
-                cash = storage[`${author}`].cash
-            }else{
-                cash = parseInt(args[1])
-                if(cash > storage[`${author}`].cash){
-                    bool = "dep"
-                    return message.channel.send(`You don't have that much cash`)
-                }
-            }
-        }else{
-            return message.channel.send("You need to specify an amount")
-        }
-        switch(args[0]){
-            case "bb":
-                storage[`${author}`].cash-=cash;
-                storage[`${author}`].bb+=cash;
-        }
-      }
-
-      if(command === "yes"){
-
-      }
-
-      if(command === "no"){
-
-      }
-
-      //SHOP COMMAND (WIP)
-      /*if(command === "shop"){
-        if(!storage[`${author}`]){
-            message.channel.send(`You're not in my database, type ${prefix}join to create an account.`)
-            return;
-        }else if(storage[`${author}`] === "deleted"){
-            return message.channel.send(`Your account was deleted, type ${prefix}join to join again`)
-        }
-
-      }*/
-    
-    })
-    
-
-client.login(TOKEN);
-    
-    
+        
+        
+    }
+  
+    // if (command === "give" || command === "donate") {
+    //   let recipientUser;
+    //   const userID = args[0];
+    //   const amount = parseInt(args[1]);
+  
+    //   if (message.mentions.users.size > 0) {
+    //     recipientUser = message.mentions.users.first();
+    //   } else if (userID && client.users.cache.has(userID)) {
+    //     recipientUser = client.users.cache.get(userID);
+    //   } else {
+    //     message.channel.send("Please mention a user or provide their ID.");
+    //     return;
+    //   }
+  
+    //   const recipientData = storage[recipientUser.id];
+    //   const senderData = storage[message.author.id];
+  
+    //   if (!recipientData || !recipientData.joined) {
+    //     message.channel.send(
+    //       "The recipient has not joined yet, so you cannot give them any money."
+    //     );
+    //     return;
+    //   }
+  
+    //   if (!amount || isNaN(amount) || amount <= 0) {
+    //     message.channel.send("Please specify a valid amount to give.");
+    //     return;
+    //   }
+  
+    //   if (senderData.money < amount) {
+    //     message.channel.send("You do not have enough money to give.");
+    //     return;
+    //   }
+  
+    //   recipientData.money += amount;
+    //   senderData.money -= amount;
+    //   save();
+  
+    //   const embed = new EmbedBuilder()
+    //     .setColor("Green")
+    //     .setTitle("Give money")
+    //     .setAuthor({
+    //       name: `${message.author.username}`,
+    //       iconURL: `${message.author.displayAvatarURL()}`,
+    //       url: `https://discord.com/users/${message.author.id}`,
+    //     })
+    //     .setDescription(
+    //       `You have successfully given <:points:1290881924092657725> ${amount} to ${recipientUser.username}.`
+    //     )
+    //     .setTimestamp();
+  
+    //   message.channel.send({ embeds: [embed] });
+    // }
+  
+    // if (command === "shop") {
+    // }
+  });
+  
+  client.login(TOKEN);
+  
