@@ -26,7 +26,8 @@ const {
   const daysOfTheWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const currentDay = daysOfTheWeek[date.getDay()];
   let costOfSolana = randomNumFromInterval(150, 300).toString();
-  
+let lastMessage; // Variabel untuk menyimpan pesan terakhir yang dikirim
+
   // <:points:1290881924092657725>
   
   // <:check:1088834644381794365>
@@ -90,10 +91,33 @@ const {
     return Math.floor(Math.random() * (max - min + 1) + min);
   }
   
-  function updateSolana() {
+function updateSolana() {
     costOfSolana = randomNumFromInterval(150, 300).toString();
+    sendOrUpdateSolanaMessage(); // Panggil fungsi untuk mengirim atau mengedit pesan
   }
   
+  function sendOrUpdateSolanaMessage() {
+    const channelId = 'CHANNEL_ID'; // Replace it with the ID of the Discord channel you want to use.
+    const channel = client.channels.cache.get(channelId);
+  
+    if (channel) {
+      // Edit the message if a previous message exists
+      if (lastMessage) {
+        lastMessage.edit(`Current price of Solana: ${costOfSolana}`)
+          .catch(console.error);
+      } else {
+        // Send a new message and save the reference if there is no previous message.
+        channel.send(`Current price of Solana: ${costOfSolana}`)
+          .then(message => {
+            lastMessage = message; // Save the last message for future editing
+          })
+          .catch(console.error);
+      }
+    } else {
+      console.error('No channel found!');
+    }
+  }
+
   setInterval(updateSolana, 5 * 60 * 1000); // updates cost of solana every 5 minutes
   
   client.on("ready", async () => {
