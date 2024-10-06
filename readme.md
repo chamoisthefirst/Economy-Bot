@@ -21,3 +21,6 @@ TO DO:
       - Add/Remove item     | ✅ |
       - Buy/Sell shop       | ✅ |
       - Use/Equip item      | Ongoing |
+      - Explore             | Ongoing |
+      - Thinking of future lyra
+      - Delete this | ✅ |
