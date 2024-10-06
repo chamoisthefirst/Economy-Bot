@@ -1,0 +1,26 @@
+TO DO:
+ 
+      - Ping command        | ✅ |
+      - Join command        | ✅ |
+      - Collect command     | ✅ |
+      - Crime command       | ✅ |
+      - Weekly command      | ✅ |
+      - Balance command     | ✅ |
+      - Help commmand       | ✅ |
+      - Withdraw command    | ✅ |
+      - Deposit command     | ✅ |
+      - Work command        | ✅ |
+      - Stream command      | ✅ |
+      - Leaderboard command | ✅ |
+      - Beg command         | ✅ |
+      - Give command        | ✅ |
+      - Shop command        | ✅ |
+      - Inventory           | ✅ |
+      - Addstock            | ✅ |
+      - Setitem             | ✅ |
+      - Add/Remove item     | ✅ |
+      - Buy/Sell shop       | ✅ |
+      - Use/Equip item      | Ongoing |
+      - Explore             | Ongoing |
+      - Thinking of future lyra
+      - Delete this | ✅ |
