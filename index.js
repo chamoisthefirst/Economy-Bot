@@ -1,6 +1,3 @@
-// points for chamois: <:points:1290881924092657725>
-// points for Noah:<:points:1102646967659659294>
-
 const {
   Client,
   GatewayIntentBits,
