@@ -1,4 +1,6 @@
-console.log('your mom');
+// points for chamois: <:points:1290881924092657725>
+// points for Noah:<:points:1102646967659659294>
+
 const {
   Client,
   GatewayIntentBits,
@@ -1126,18 +1128,22 @@ client.on("messageCreate", async (message) => {
 
     let numSolana = parseInt(args[0]);
 
+    if(args[0] === "all"){
+      numSolana = Math.floor(storage[message.author.id].money/costOfSolana);
+    }
+
     if (!numSolana) {
-      message.channel.send("Please specify the amount of Solana you want to buy");
+      message.channel.send("Please specify \"all\" or the amount of Solana you want to buy");
       return;
     }
 
     if (isNaN(numSolana) || numSolana < 1) {
-      message.channel.send("Please choose an actual number or a reasonable number");
+      message.channel.send("Please choose an actual number, a reasonable number, or \"all\"");
       return;
     }
 
     if (storage[message.author.id].money < costOfSolana * numSolana) {
-      message.channel.send("You do not have enough money to buy that amount of Solana");
+      message.channel.send("You do not have enough money to buy that amount of Solana. Maybe try `$buy all`");
       return;
     }
 
@@ -1170,18 +1176,22 @@ client.on("messageCreate", async (message) => {
 
     let sellNumSolana = parseInt(args[0]);
 
+    if(args[0] === "all"){
+      sellNumSolana = storage[message.author.id].solana;
+    }
+
     if (!sellNumSolana) {
-      message.channel.send("Please specify the amount of Solana you want to sell");
+      message.channel.send("Please specify \"all\" or the amount of Solana you want to sell");
       return;
     }
 
     if (isNaN(sellNumSolana) || sellNumSolana < 1) {
-      message.channel.send("Please choose an actual number or a reasonable number");
+      message.channel.send("Please choose an actual number, a reasonable number, or \"all\"");
       return;
     }
 
     if (storage[message.author.id].solana < sellNumSolana) {
-      message.channel.send("You do not have enough Solana to sell that amount");
+      message.channel.send("You do not have enough Solana to sell that amount. Maybe try `$sell all`");
       return;
     }
 
