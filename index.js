@@ -1,4 +1,3 @@
-console.log('your mom');
 const {
   Client,
   GatewayIntentBits,
