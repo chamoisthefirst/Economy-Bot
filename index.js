@@ -1151,7 +1151,26 @@ client.on("messageCreate", async (message) => {
     storage[message.author.id].solana += numSolana;
     save();
 
-    const embed = new EmbedBuilder()
+    if(args[0] === "all"){
+
+      let embed = new EmbedBuilder()
+      .setColor("Green")
+      .setTitle("Buy")
+      .setAuthor({
+        name: `${message.author.username}`,
+        iconURL: `${message.author.displayAvatarURL()}`,
+        url: `https://discord.com/users/${message.author.id}`,
+      })
+      .setDescription(`You have successfully bought all the Solana you can afford.`)
+      .setTimestamp();
+
+      message.channel.send({ embeds: [embed]});
+      return;
+    
+    }
+
+
+    let embed = new EmbedBuilder()
     .setColor("Green")
     .setTitle("Buy")
     .setAuthor({
@@ -1199,7 +1218,24 @@ client.on("messageCreate", async (message) => {
     storage[message.author.id].solana -= sellNumSolana;
     save();
 
-    const embed = new EmbedBuilder()
+    if(args[0] === "all"){
+      let embed = new EmbedBuilder()
+      .setColor("Green")
+      .setTitle("Sell")
+      .setAuthor({
+        name: `${message.author.username}`,
+        iconURL: `${message.author.displayAvatarURL()}`,
+        url: `https://discord.com/users/${message.author.id}`,
+      })
+      .setDescription(`You have sold all of your Solana for <:points:1102646967659659294> ${costOfSolana * sellNumSolana}`)
+      .setTimestamp();
+
+      message.channel.send({ embeds:[embed]})
+
+      return;
+    }
+
+    let embed = new EmbedBuilder()
     .setColor("Green")
     .setTitle("Sell")
     .setAuthor({
