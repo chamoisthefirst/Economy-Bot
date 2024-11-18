@@ -1169,8 +1169,11 @@ client.on("messageCreate", async (message) => {
 
     let sellNumSolana = parseInt(args[0]);
 
-    if (!sellNumSolana) {
-      message.channel.send("Please specify the amount of Solana you want to sell");
+    if (!sellNumSolana && args[0] != "all") {
+      message.channel.send("Please specify \"all\" or the amount of Solana you want to sell");
+      return;
+    }else if(!sellNumSolana){
+      message.channel.send("You do not have any Solana to sell");
       return;
     }
 
